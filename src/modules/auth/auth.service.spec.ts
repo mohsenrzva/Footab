@@ -70,15 +70,13 @@ describe('AuthService', () => {
   });
 
   describe('requestOtp', () => {
-    it('creates user if needed and returns an otp', async () => {
-      users.findByPhone.mockResolvedValue(null);
-      users.create.mockResolvedValue({ id: '1', phone: '1111' });
+    it('returns an otp without creating user', async () => {
       otps.saveOtp.mockResolvedValue(null);
       jest.spyOn(Math, 'random').mockReturnValue(0.123456); // 123456
 
       const res = await service.requestOtp({ phone: '1111' });
 
-      expect(users.create).toHaveBeenCalledWith('1111');
+      expect(users.create).not.toHaveBeenCalled();
       expect(otps.saveOtp).toHaveBeenCalled();
       expect(res).toEqual({ otp: '123456' });
     });

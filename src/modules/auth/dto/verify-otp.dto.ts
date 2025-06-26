@@ -1,10 +1,11 @@
-import { IsNotEmpty, IsPhoneNumber } from 'class-validator';
+import { IsNotEmpty, IsPhoneNumber, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class VerifyOtpDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsPhoneNumber()
+  @Matches(/^\d{10}$/)
   phone: string;
 
   @ApiProperty()

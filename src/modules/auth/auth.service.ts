@@ -16,10 +16,6 @@ export class AuthService {
   ) {}
 
   async requestOtp(dto: RequestOtpDto) {
-    let user = await this.users.findByPhone(dto.phone);
-    if (!user) {
-      user = await this.users.create(dto.phone);
-    }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = new Date(Date.now() + 5 * 60 * 1000);
     await this.otps.saveOtp(dto.phone, otp, expires);
@@ -28,10 +24,13 @@ export class AuthService {
   }
 
   async verifyOtp(dto: VerifyOtpDto) {
-    const user = await this.users.findByPhone(dto.phone);
+    let user = await this.users.findByPhone(dto.phone);
     const otpDoc = await this.otps.findOtp(dto.phone);
-    if (!user || !otpDoc || otpDoc.code !== dto.otp || otpDoc.expires < new Date()) {
+    if (!otpDoc || otpDoc.code !== dto.otp || otpDoc.expires < new Date()) {
       throw new UnauthorizedException('Invalid OTP');
+    }
+    if (!user) {
+      user = await this.users.create(dto.phone);
     }
     const payload = { sub: user.id, phone: user.phone };
     const accessToken = await this.jwt.signAsync(payload, {

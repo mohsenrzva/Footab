@@ -1,6 +1,7 @@
 # Footab Backend
 
 This repository contains a small [NestJS](https://nestjs.com/) API that uses an OTP based workflow for authentication. After verifying an OTP, the server issues JWT access and refresh tokens.
+One-time passwords are stored in a dedicated `otp` MongoDB collection rather than inside the user documents.
 
 ## Installation
 
@@ -14,6 +15,10 @@ npm install
 - `JWT_SECRET` - secret used to sign tokens (`secret` by default)
 - `JWT_ACCESS_EXPIRES_IN` - access token lifetime (default `30m`)
 - `JWT_REFRESH_EXPIRES_IN` - refresh token lifetime (default `7d`)
+- `PORT` - port the server listens on (default `3000`)
+
+Create a `.env` file (you can copy `.env.example`) to set these values. The server
+loads this file automatically on startup.
 
 ## Running the app
 

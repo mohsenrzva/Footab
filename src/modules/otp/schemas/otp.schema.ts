@@ -2,12 +2,15 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 @Schema({ timestamps: true })
-export class User extends Document {
+export class Otp extends Document {
   @Prop({ unique: true })
   phone: string;
 
   @Prop()
-  refreshTokenHash?: string;
+  code: string;
+
+  @Prop()
+  expires: Date;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export const OtpSchema = SchemaFactory.createForClass(Otp);

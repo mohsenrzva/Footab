@@ -15,24 +15,9 @@ export class UserService {
     return this.userModel.findOne({ phone }).exec();
   }
 
-  async updateOtp(userId: string, code: string, expires: Date) {
-    return this.userModel
-      .findByIdAndUpdate(userId, {
-        otpCode: code,
-        otpExpires: expires,
-      })
-      .exec();
-  }
-
   async saveRefreshTokenHash(userId: string, hash: string) {
     return this.userModel
       .findByIdAndUpdate(userId, { refreshTokenHash: hash })
-      .exec();
-  }
-
-  async clearOtp(userId: string) {
-    return this.userModel
-      .findByIdAndUpdate(userId, { $unset: { otpCode: 1, otpExpires: 1 } })
       .exec();
   }
 }

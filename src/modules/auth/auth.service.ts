@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { UserService } from '../users/user.service';
+import { OtpService } from '../otp/otp.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -10,6 +11,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 export class AuthService {
   constructor(
     private users: UserService,
+    private otps: OtpService,
     private jwt: JwtService,
   ) {}
 
@@ -20,14 +22,15 @@ export class AuthService {
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = new Date(Date.now() + 5 * 60 * 1000);
-    await this.users.updateOtp(user.id, otp, expires);
+    await this.otps.saveOtp(dto.phone, otp, expires);
     // Here you would normally send OTP via SMS
     return { otp }; // returning for demo purposes
   }
 
   async verifyOtp(dto: VerifyOtpDto) {
     const user = await this.users.findByPhone(dto.phone);
-    if (!user || user.otpCode !== dto.otp || user.otpExpires < new Date()) {
+    const otpDoc = await this.otps.findOtp(dto.phone);
+    if (!user || !otpDoc || otpDoc.code !== dto.otp || otpDoc.expires < new Date()) {
       throw new UnauthorizedException('Invalid OTP');
     }
     const payload = { sub: user.id, phone: user.phone };
@@ -39,7 +42,7 @@ export class AuthService {
     });
     const refreshHash = await bcrypt.hash(refreshToken, 10);
     await this.users.saveRefreshTokenHash(user.id, refreshHash);
-    await this.users.clearOtp(user.id);
+    await this.otps.clearOtp(dto.phone);
     return { accessToken, refreshToken };
   }
 

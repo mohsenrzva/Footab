@@ -4,10 +4,24 @@ import { UserService } from '../users/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 
+// Create proper mock types
+type MockUserService = {
+  findByPhone: jest.Mock;
+  create: jest.Mock;
+  updateOtp: jest.Mock;
+  saveRefreshTokenHash: jest.Mock;
+  clearOtp: jest.Mock;
+};
+
+type MockJwtService = {
+  signAsync: jest.Mock;
+  verifyAsync: jest.Mock;
+};
+
 describe('AuthService', () => {
   let service: AuthService;
-  let users: jest.Mocked<UserService>;
-  let jwt: jest.Mocked<JwtService>;
+  let users: MockUserService;
+  let jwt: MockJwtService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -21,14 +35,14 @@ describe('AuthService', () => {
             updateOtp: jest.fn(),
             saveRefreshTokenHash: jest.fn(),
             clearOtp: jest.fn(),
-          },
+          } as MockUserService,
         },
         {
           provide: JwtService,
           useValue: {
             signAsync: jest.fn(),
             verifyAsync: jest.fn(),
-          },
+          } as MockJwtService,
         },
       ],
     }).compile();
@@ -44,9 +58,9 @@ describe('AuthService', () => {
 
   describe('requestOtp', () => {
     it('creates user if needed and returns an otp', async () => {
-      users.findByPhone.mockResolvedValue(null as any);
-      users.create.mockResolvedValue({ id: '1', phone: '1111' } as any);
-      users.updateOtp.mockResolvedValue(null as any);
+      users.findByPhone.mockResolvedValue(null);
+      users.create.mockResolvedValue({ id: '1', phone: '1111' });
+      users.updateOtp.mockResolvedValue(null);
       jest.spyOn(Math, 'random').mockReturnValue(0.123456); // 123456
 
       const res = await service.requestOtp({ phone: '1111' });
@@ -64,11 +78,13 @@ describe('AuthService', () => {
         phone: '1111',
         otpCode: '123456',
         otpExpires: new Date(Date.now() + 60000),
-      } as any);
-      jwt.signAsync.mockResolvedValueOnce('access').mockResolvedValueOnce('refresh');
-      jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashed');
-      users.saveRefreshTokenHash.mockResolvedValue(null as any);
-      users.clearOtp.mockResolvedValue(null as any);
+      });
+      jwt.signAsync
+        .mockResolvedValueOnce('access')
+        .mockResolvedValueOnce('refresh');
+      (jest.spyOn(bcrypt, 'hash') as jest.Mock).mockResolvedValue('hashed');
+      users.saveRefreshTokenHash.mockResolvedValue(null);
+      users.clearOtp.mockResolvedValue(null);
 
       const res = await service.verifyOtp({ phone: '1111', otp: '123456' });
 
@@ -84,7 +100,7 @@ describe('AuthService', () => {
         phone: '1111',
         otpCode: '000000',
         otpExpires: new Date(Date.now() + 60000),
-      } as any);
+      });
 
       await expect(
         service.verifyOtp({ phone: '1111', otp: '123456' }),
@@ -99,8 +115,8 @@ describe('AuthService', () => {
         id: '1',
         phone: '1111',
         refreshTokenHash: 'hash',
-      } as any);
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
+      });
+      (jest.spyOn(bcrypt, 'compare') as jest.Mock).mockResolvedValue(true);
       jwt.signAsync.mockResolvedValue('newAccess');
 
       const res = await service.refresh({ refreshToken: 'refresh' });
